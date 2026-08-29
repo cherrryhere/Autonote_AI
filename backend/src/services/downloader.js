@@ -42,6 +42,7 @@ export async function getYouTubeInfo(url) {
       noPlaylist:          true,
       skipDownload:        true,
       noCheckCertificates: true,
+      extractorArgs:       'youtube:player_client=android',
     })
     return {
       title:           info.title || 'Untitled',
@@ -68,6 +69,7 @@ export async function downloadYouTubeAudio(url) {
       noPlaylist:          true,
       skipDownload:        true,
       noCheckCertificates: true,
+      extractorArgs:       'youtube:player_client=android',
     })
   } catch (err) {
     throw friendlyError(err)
@@ -95,6 +97,9 @@ export async function downloadYouTubeAudio(url) {
       noPlaylist:          true,
       noWarnings:          true,
       noCheckCertificates: true,
+      // The "android" player client reliably avoids the 403s that YouTube's
+      // default web/android_vr clients return on the actual media download.
+      extractorArgs:       'youtube:player_client=android',
       // Useful when YouTube tightens bot detection — pretend to be a real browser.
       addHeader: ['user-agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'],
     })
