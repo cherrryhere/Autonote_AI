@@ -1,6 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout.jsx'
+import ProtectedRoute from './components/ProtectedRoute.jsx'
 import LandingPage from './pages/LandingPage.jsx'
+import Login from './pages/Login.jsx'
+import Signup from './pages/Signup.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import UploadLecture from './pages/UploadLecture.jsx'
 import GeneratedNotes from './pages/GeneratedNotes.jsx'
@@ -13,11 +16,13 @@ import Settings from './pages/Settings.jsx'
 export default function App() {
   return (
     <Routes>
-      {/* Public landing route — has its own layout */}
+      {/* Public routes — no sidebar/topbar shell */}
       <Route path="/" element={<LandingPage />} />
+      <Route path="/login"  element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
 
-      {/* App shell with sidebar + topbar */}
-      <Route element={<Layout />}>
+      {/* App shell with sidebar + topbar — requires sign-in */}
+      <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route path="/dashboard"  element={<Dashboard />} />
         <Route path="/upload"     element={<UploadLecture />} />
         <Route path="/notes"      element={<GeneratedNotes />} />

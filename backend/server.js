@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { mkdirSync } from 'fs'
 
+import authRouter     from './src/routes/auth.js'
 import lecturesRouter from './src/routes/lectures.js'
 import statsRouter    from './src/routes/stats.js'
 
@@ -26,6 +27,7 @@ app.use(morgan('dev'))
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }))
 
+app.use('/api/auth',     authRouter)
 app.use('/api/lectures', lecturesRouter)
 app.use('/api/stats',    statsRouter)
 

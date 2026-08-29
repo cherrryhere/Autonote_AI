@@ -11,9 +11,10 @@ export const STEPS = [
   'flashcards_quiz', // 4 — flashcards + MCQ quiz
 ]
 
-export function createLecture({ id, title, subject, semester, filename, mimeType, size, sourceUrl }) {
+export function createLecture({ id, userId, title, subject, semester, filename, mimeType, size, sourceUrl }) {
   const record = {
     id,
+    userId,
     title,
     subject,
     semester,
@@ -48,12 +49,14 @@ export function updateLecture(id, patch) {
   return cur
 }
 
-export function listLectures() {
-  return Array.from(lectures.values()).sort((a, b) => b.createdAt - a.createdAt)
+export function listLectures(userId) {
+  return Array.from(lectures.values())
+    .filter((l) => l.userId === userId)
+    .sort((a, b) => b.createdAt - a.createdAt)
 }
 
-export function getStats() {
-  const all = Array.from(lectures.values())
+export function getStats(userId) {
+  const all = Array.from(lectures.values()).filter((l) => l.userId === userId)
   const completed = all.filter((l) => l.status === 'completed')
   return {
     totalLectures:     all.length,

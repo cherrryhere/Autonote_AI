@@ -4,8 +4,11 @@ import { upload } from '../middleware/upload.js'
 import { createLecture, getLecture, listLectures, STEPS } from '../services/store.js'
 import { startProcessing } from '../services/processor.js'
 import { isSupportedUrl, getYouTubeInfo } from '../services/downloader.js'
+import { requireAuth } from '../middleware/auth.js'
 
 const router = Router()
+
+router.use(requireAuth)
 
 // POST /api/lectures — multipart file upload + start processing
 router.post('/', upload.single('file'), (req, res, next) => {
@@ -20,6 +23,7 @@ router.post('/', upload.single('file'), (req, res, next) => {
     const id = nanoid(10)
     const lecture = createLecture({
       id,
+      userId: req.userId,
       title,
       subject,
       semester,
@@ -61,6 +65,7 @@ router.post('/url', async (req, res, next) => {
     const id = nanoid(10)
     const lecture = createLecture({
       id,
+      userId: req.userId,
       title:    finalTitle,
       subject,
       semester,
@@ -91,15 +96,15 @@ router.get('/url-info', async (req, res, next) => {
 })
 
 // GET /api/lectures — recent first (strips heavy fields)
-router.get('/', (_req, res) => {
-  const list = listLectures().map(({ transcript: _t, notes: _n, summary: _s, flashcards: _f, quiz: _q, ...meta }) => meta)
+router.get('/', (req, res) => {
+  const list = listLectures(req.userId).map(({ transcript: _t, notes: _n, summary: _s, flashcards: _f, quiz: _q, ...meta }) => meta)
   res.json({ lectures: list })
 })
 
 // GET /api/lectures/:id/status — lightweight progress endpoint for polling
 router.get('/:id/status', (req, res) => {
   const lecture = getLecture(req.params.id)
-  if (!lecture) return res.status(404).json({ error: 'Lecture not found.' })
+  if (!lecture || lecture.userId !== req.userId) return res.status(404).json({ error: 'Lecture not found.' })
   res.json({
     id:       lecture.id,
     status:   lecture.status,
@@ -112,7 +117,7 @@ router.get('/:id/status', (req, res) => {
 // GET /api/lectures/:id — full lecture record
 router.get('/:id', (req, res) => {
   const lecture = getLecture(req.params.id)
-  if (!lecture) return res.status(404).json({ error: 'Lecture not found.' })
+  if (!lecture || lecture.userId !== req.userId) return res.status(404).json({ error: 'Lecture not found.' })
   res.json(lecture)
 })
 

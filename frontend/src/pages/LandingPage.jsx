@@ -40,8 +40,8 @@ export default function LandingPage() {
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link to="/dashboard" className="hidden sm:inline-flex btn-ghost">Sign In</Link>
-            <Link to="/dashboard" className="btn-primary">
+            <Link to="/login" className="hidden sm:inline-flex btn-ghost">Sign In</Link>
+            <Link to="/signup" className="btn-primary">
               Get Started <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -292,7 +292,7 @@ export default function LandingPage() {
           <p className="relative mt-3 text-white/90 max-w-xl mx-auto">
             Join thousands of students who study less, learn more, and sleep better with AutoNote AI.
           </p>
-          <Link to="/dashboard" className="relative inline-flex items-center gap-2 mt-7 bg-white text-brand-700 font-semibold px-6 py-3 rounded-xl hover:scale-[1.02] active:scale-[0.99] transition-transform shadow-lg">
+          <Link to="/signup" className="relative inline-flex items-center gap-2 mt-7 bg-white text-brand-700 font-semibold px-6 py-3 rounded-xl hover:scale-[1.02] active:scale-[0.99] transition-transform shadow-lg">
             Start for Free <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

@@ -1,7 +1,30 @@
-import { Bell, Search, Menu } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Bell, Search, Menu, LogOut } from 'lucide-react'
 import { userProfile } from '../data/sampleData.js'
+import { useAuth } from '../context/AuthContext.jsx'
+
+function initials(name) {
+  return name
+    .split(' ')
+    .map((p) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+}
 
 export default function Topbar({ onMenuClick }) {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const name   = user?.name || userProfile.name
+  const detail = user?.email || userProfile.branch
+  const avatar = user ? initials(user.name) : userProfile.avatar
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
+
   return (
     <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-slate-200/70">
       <div className="flex items-center justify-between gap-4 px-4 sm:px-6 py-3">
@@ -40,12 +63,20 @@ export default function Topbar({ onMenuClick }) {
 
           <div className="flex items-center gap-3">
             <div className="hidden sm:block text-right">
-              <p className="text-sm font-semibold text-slate-800 leading-tight">{userProfile.name}</p>
-              <p className="text-xs text-slate-500">{userProfile.branch}</p>
+              <p className="text-sm font-semibold text-slate-800 leading-tight">{name}</p>
+              <p className="text-xs text-slate-500">{detail}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-brand-gradient text-white grid place-items-center font-bold shadow-soft">
-              {userProfile.avatar}
+              {avatar}
             </div>
+            <button
+              onClick={handleLogout}
+              className="p-2.5 rounded-xl hover:bg-slate-100 transition text-slate-500 hover:text-rose-600"
+              aria-label="Sign out"
+              title="Sign out"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           </div>
         </div>
       </div>
