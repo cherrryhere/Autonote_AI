@@ -20,12 +20,19 @@ router.post('/signup', async (req, res, next) => {
       return res.status(400).json({ error: 'Password must be at least 8 characters.' })
     }
 
-    if (findUserByEmail(email)) {
+    if (await findUserByEmail(email)) {
       return res.status(409).json({ error: 'An account with that email already exists.' })
     }
 
     const passwordHash = await bcrypt.hash(password, 10)
-    const user = createUser({ id: nanoid(12), name: name.trim(), email, passwordHash })
+    let user
+    try {
+      user = await createUser({ id: nanoid(12), name: name.trim(), email, passwordHash })
+    } catch (err) {
+      // Unique violation — two signups for the same email raced past the check above.
+      if (err.code === '23505') return res.status(409).json({ error: 'An account with that email already exists.' })
+      throw err
+    }
     const token = signToken(user.id)
 
     res.status(201).json({ token, user: toPublicUser(user) })
@@ -40,7 +47,7 @@ router.post('/login', async (req, res, next) => {
       return res.status(400).json({ error: 'Email and password are required.' })
     }
 
-    const user = findUserByEmail(email)
+    const user = await findUserByEmail(email)
     const valid = user && await bcrypt.compare(password, user.passwordHash)
     if (!valid) {
       return res.status(401).json({ error: 'Incorrect email or password.' })

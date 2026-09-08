@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { mkdirSync } from 'fs'
 
+import { initSchema } from './src/db.js'
 import authRouter     from './src/routes/auth.js'
 import lecturesRouter from './src/routes/lectures.js'
 import statsRouter    from './src/routes/stats.js'
@@ -40,14 +41,22 @@ app.use((err, _req, res, _next) => {
   res.status(err.status || 500).json({ error: err.message || 'Server error' })
 })
 
-app.listen(PORT, () => {
-  const transcribeModel = process.env.GROQ_TRANSCRIBE_MODEL || 'whisper-large-v3-turbo'
-  const chatModel       = process.env.GROQ_CHAT_MODEL       || 'llama-3.3-70b-versatile'
-  const keyOk = !!process.env.GROQ_API_KEY
-  console.log(`\n  AutoNote AI backend listening on http://localhost:${PORT}`)
-  console.log(`  CORS allowed for ${FRONTEND_ORIGIN}`)
-  console.log(`  Transcribe:   ${transcribeModel}`)
-  console.log(`  Chat model:   ${chatModel}`)
-  console.log(`  Groq key:     ${keyOk ? 'loaded ✓' : 'MISSING ✗  — add GROQ_API_KEY to .env'}`)
-  console.log('')
-})
+initSchema()
+  .then(() => {
+    app.listen(PORT, () => {
+      const transcribeModel = process.env.GROQ_TRANSCRIBE_MODEL || 'whisper-large-v3-turbo'
+      const chatModel       = process.env.GROQ_CHAT_MODEL       || 'llama-3.3-70b-versatile'
+      const keyOk = !!process.env.GROQ_API_KEY
+      console.log(`\n  AutoNote AI backend listening on http://localhost:${PORT}`)
+      console.log(`  CORS allowed for ${FRONTEND_ORIGIN}`)
+      console.log(`  Transcribe:   ${transcribeModel}`)
+      console.log(`  Chat model:   ${chatModel}`)
+      console.log(`  Groq key:     ${keyOk ? 'loaded ✓' : 'MISSING ✗  — add GROQ_API_KEY to .env'}`)
+      console.log(`  Database:     connected ✓`)
+      console.log('')
+    })
+  })
+  .catch((err) => {
+    console.error('Failed to initialize database schema:', err.message)
+    process.exit(1)
+  })

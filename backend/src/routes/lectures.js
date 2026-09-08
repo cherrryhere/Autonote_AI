@@ -11,7 +11,7 @@ const router = Router()
 router.use(requireAuth)
 
 // POST /api/lectures — multipart file upload + start processing
-router.post('/', upload.single('file'), (req, res, next) => {
+router.post('/', upload.single('file'), async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded.' })
 
@@ -21,7 +21,7 @@ router.post('/', upload.single('file'), (req, res, next) => {
     }
 
     const id = nanoid(10)
-    const lecture = createLecture({
+    const lecture = await createLecture({
       id,
       userId: req.userId,
       title,
@@ -63,7 +63,7 @@ router.post('/url', async (req, res, next) => {
     }
 
     const id = nanoid(10)
-    const lecture = createLecture({
+    const lecture = await createLecture({
       id,
       userId: req.userId,
       title:    finalTitle,
@@ -96,29 +96,36 @@ router.get('/url-info', async (req, res, next) => {
 })
 
 // GET /api/lectures — recent first (strips heavy fields)
-router.get('/', (req, res) => {
-  const list = listLectures(req.userId).map(({ transcript: _t, notes: _n, summary: _s, flashcards: _f, quiz: _q, ...meta }) => meta)
-  res.json({ lectures: list })
+router.get('/', async (req, res, next) => {
+  try {
+    const lectures = await listLectures(req.userId)
+    const list = lectures.map(({ transcript: _t, notes: _n, summary: _s, flashcards: _f, quiz: _q, ...meta }) => meta)
+    res.json({ lectures: list })
+  } catch (err) { next(err) }
 })
 
 // GET /api/lectures/:id/status — lightweight progress endpoint for polling
-router.get('/:id/status', (req, res) => {
-  const lecture = getLecture(req.params.id)
-  if (!lecture || lecture.userId !== req.userId) return res.status(404).json({ error: 'Lecture not found.' })
-  res.json({
-    id:       lecture.id,
-    status:   lecture.status,
-    step:     lecture.step,
-    stepName: STEPS[lecture.step] || 'done',
-    error:    lecture.error,
-  })
+router.get('/:id/status', async (req, res, next) => {
+  try {
+    const lecture = await getLecture(req.params.id)
+    if (!lecture || lecture.userId !== req.userId) return res.status(404).json({ error: 'Lecture not found.' })
+    res.json({
+      id:       lecture.id,
+      status:   lecture.status,
+      step:     lecture.step,
+      stepName: STEPS[lecture.step] || 'done',
+      error:    lecture.error,
+    })
+  } catch (err) { next(err) }
 })
 
 // GET /api/lectures/:id — full lecture record
-router.get('/:id', (req, res) => {
-  const lecture = getLecture(req.params.id)
-  if (!lecture || lecture.userId !== req.userId) return res.status(404).json({ error: 'Lecture not found.' })
-  res.json(lecture)
+router.get('/:id', async (req, res, next) => {
+  try {
+    const lecture = await getLecture(req.params.id)
+    if (!lecture || lecture.userId !== req.userId) return res.status(404).json({ error: 'Lecture not found.' })
+    res.json(lecture)
+  } catch (err) { next(err) }
 })
 
 export default router

@@ -1,7 +1,10 @@
 // Thin fetch wrapper around the Express backend.
 // During dev, /api is proxied to http://localhost:3001 (see vite.config.js).
+// In production, set VITE_API_URL to the deployed backend's origin
+// (e.g. https://autonote-backend.onrender.com) since frontend and backend
+// are served from different domains.
 
-const BASE = '/api'
+const BASE = `${import.meta.env.VITE_API_URL || ''}/api`
 
 // Holds the current session token in memory so every request can attach it.
 // AuthContext is the single writer — it keeps this in sync with localStorage.

@@ -6,9 +6,9 @@ import { updateLecture, getLecture } from './store.js'
 
 // Kick off the pipeline. Caller does not await — UI polls /status.
 export function startProcessing(lectureId, source) {
-  process(lectureId, source).catch((err) => {
+  process(lectureId, source).catch(async (err) => {
     console.error(`[processor] lecture ${lectureId} failed:`, err.message)
-    updateLecture(lectureId, {
+    await updateLecture(lectureId, {
       status: 'failed',
       error: err.message,
       rateLimited: !!err.rateLimited,
@@ -18,13 +18,13 @@ export function startProcessing(lectureId, source) {
 
 // `source` is either { kind: 'file', filePath } or { kind: 'url', url }.
 async function process(lectureId, source) {
-  const lecture = getLecture(lectureId)
+  const lecture = await getLecture(lectureId)
   if (!lecture) throw new Error('Lecture not found')
 
   // ─── Step 1 — get audio onto disk ──────────────────────────────────────────
   // For URL sources this means downloading from YouTube; for file sources it's
   // already on disk from multer. Either way, we end up with an input path.
-  updateLecture(lectureId, { step: 1 })
+  await updateLecture(lectureId, { step: 1 })
 
   let inputPath
   let downloadedPath = null      // tracked separately so we can clean it up
@@ -34,7 +34,7 @@ async function process(lectureId, source) {
     inputPath = downloadedPath = dl.path
     // Stamp the duration we got from YouTube straight away so it's available
     // even if the user navigates between pages mid-pipeline.
-    updateLecture(lectureId, {
+    await updateLecture(lectureId, {
       duration: formatDuration(dl.durationSeconds),
       sourceTitle: dl.title,
       sourceAuthor: dl.author,
@@ -47,7 +47,7 @@ async function process(lectureId, source) {
   const { path: audioPath, didCompress } = await compressForWhisper(inputPath)
 
   // ─── Step 2 — transcribe with Groq Whisper ─────────────────────────────────
-  updateLecture(lectureId, { step: 2 })
+  await updateLecture(lectureId, { step: 2 })
   const transcript = await transcribeAudio(audioPath)
 
   if (!transcript || transcript.trim().length < 20) {
@@ -55,11 +55,12 @@ async function process(lectureId, source) {
   }
 
   // ─── Steps 3–4 — Llama generates summary + notes + flashcards + quiz ───────
-  updateLecture(lectureId, { step: 3 })
+  await updateLecture(lectureId, { step: 3 })
 
   const ticker = setInterval(() => {
-    const cur = getLecture(lectureId)
-    if (cur && cur.step < 4) updateLecture(lectureId, { step: cur.step + 1 })
+    getLecture(lectureId).then((cur) => {
+      if (cur && cur.step < 4) return updateLecture(lectureId, { step: cur.step + 1 })
+    }).catch((err) => console.error(`[processor] ticker update failed for ${lectureId}:`, err.message))
   }, 6000)
 
   let result
@@ -70,7 +71,7 @@ async function process(lectureId, source) {
   }
 
   // ─── Step 5 — done ─────────────────────────────────────────────────────────
-  updateLecture(lectureId, {
+  await updateLecture(lectureId, {
     status:     'completed',
     step:       5,
     duration:   result.durationLabel || lecture.duration,

@@ -5,8 +5,10 @@ import { requireAuth } from '../middleware/auth.js'
 const router = Router()
 
 // GET /api/stats — totals for the dashboard cards
-router.get('/', requireAuth, (req, res) => {
-  res.json(getStats(req.userId))
+router.get('/', requireAuth, async (req, res, next) => {
+  try {
+    res.json(await getStats(req.userId))
+  } catch (err) { next(err) }
 })
 
 export default router
